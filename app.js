@@ -1,7 +1,7 @@
 
 var controller = function($scope, $http, $cookieStore){
     $scope.showPopup = {TRFilters: false, TRUsers: false};
-    $scope.base_url = 'http://tuugobank.grybov.com/';
+    $scope.base_url = '/';
 
     $scope.transactionfilters = {
         filters:{
@@ -25,7 +25,7 @@ var controller = function($scope, $http, $cookieStore){
             name : $scope.saveduser,
             amount: 20
         };
-        $scope.newTransaction.date = $scope.newTransaction.date.replace(/(^|[.])([1-9])(?=\.)/g, '$10$2');
+//        $scope.newTransaction.date = $scope.newTransaction.date.replace(/(^|[.])([1-9])(?=\.)/g, '$10$2');
     };
 
     var initPage = function(){
@@ -48,6 +48,14 @@ var controller = function($scope, $http, $cookieStore){
             alert('Error in keys: ' + errors.join(', '));
         }
     };
+
+    $scope.setTransaction = function(uid, type, amount){
+        if(uid){
+            $scope.newTransaction.name = uid;
+            $scope.newTransaction.type = type;
+            $scope.newTransaction.amount = amount;
+        }
+    }
 
     $scope.setAmount = function(sum){
         $scope.newTransaction.amount=sum;
