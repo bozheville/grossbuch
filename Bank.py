@@ -107,3 +107,20 @@ class Bank:
         total = summary['in_bank'] + summary['in_credit'] - summary['externalLoan']
         self.db.summary.update({'_id': 'total'}, {'$set': {'amount': total}})
         return total
+
+    def Exchange(self, user, amount_from, exchange_type, amount_to):
+        action = ''
+        usdamount = 0
+        if exchange_type == 'uah2usd':
+            self.db.summary.update({'_id': 'usd'}, {'$inc': {'amount': int(amount_to)}}, True)
+            self.db.summary.update({'_id': 'total'}, {'$inc': {'amount': -int(amount_from)}}, True)
+            self.db.summary.update({'_id': 'in_bank'}, {'$inc': {'amount': -int(amount_from)}}, True)
+            action = 'BuyUSD'
+            usdamount = int(amount_to)
+        elif exchange_type == 'usd2uah':
+            self.db.summary.update({'_id': 'usd'}, {'$inc': {'amount': -int(amount_from)}}, True)
+            self.db.summary.update({'_id': 'total'}, {'$inc': {'amount': int(amount_to)}}, True)
+            self.db.summary.update({'_id': 'in_bank'}, {'$inc': {'amount': int(amount_to)}}, True)
+            action = 'SellUSD'
+            usdamount = int(amount_from)
+        self.__logTransaction(user, action, usdamount)

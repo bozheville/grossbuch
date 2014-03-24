@@ -10,6 +10,7 @@
     <style>
         .filterbutton{font-variant:small-caps; font-size: 14px;}
         .amount:after{content: " uah";font-variant:small-caps;}
+        .amount.usd:after{content: " usd";font-variant:small-caps;}
         .action{text-decoration: underline; cursor: pointer;}
         .action:hover{text-decoration: none;}
         #newAmouont{margin-bottom: 2px;}
@@ -36,9 +37,36 @@
     </div>
     <div class="sixteen columns">
         <h3>Total balance: <span class="amount">{{pageinfo.summary.total}}</span></h3>
+        <h3>Total USD: <span class="amount usd">{{pageinfo.summary.usd}}</span></h3>
         <h4>In credit: <span class="amount">{{pageinfo.summary.in_credit}}</span></h4>
         <h4>External loan: <span class="amount">{{pageinfo.summary.externalLoan}}</span></h4>
         <h4>In Banka: <span class="amount">{{pageinfo.summary.in_bank}}</span></h4>
+    </div>
+    <div class="sixteen columns">
+        <div class="one column">
+            <input type="text" ng-model="exchData.from"/>
+        </div>
+        <div class="two columns">
+            <label for="uah2usd">
+                <input type="radio" ng-model="exchData.type" name="convert_type" id="uah2usd" value="uah2usd" selected="selected" />
+                <span>UAH to USD</span>
+            </label>
+            <label for="usd2uah">
+                <input type="radio" ng-model="exchData.type" name="convert_type" id="usd2uah" value="usd2uah" selected="selected" />
+                <span>USD to UAH</span>
+            </label>
+        </div>
+        <div class="one column">
+            <input type="text" ng-model="exchData.to"/>
+        </div>
+        <div class="three columns">
+            <select ng-model="exchData.user">
+                <option ng-repeat="user in pageinfo.users" value="{{user._id}}" ng-if="!user.disabled">{{user.name}}</option>
+            </select>
+        </div>
+        <div class="two columns">
+            <input type="button" value="Exchange" ng-click="exchange()"/>
+        </div>
     </div>
     <hr/>
     <div class="sixteen columns">
@@ -77,7 +105,7 @@
         </div>
     </div>
     <hr/>
-    <div class="eleven columns">
+    <div class="twelve columns">
         <h4>Last transactions
             <span id="tr-filters" class="action filterbutton" ng-click="togglePopup('TRFilters');">filters</span>
             <span id="tr-filters" class="action filterbutton" ng-click="togglePopup('TRUsers');">users</span>
@@ -93,14 +121,15 @@
                 Credit: {{transaction.summary.in_credit}},
                 Loan: {{transaction.summary.externalLoan}},
                 Total: {{transaction.summary.total}}
+                USD: {{transaction.summary.usd}}
             </li>
         </ul>
     </div>
-    <div class="five columns">
+    <div class="four columns">
         <h4>Debit <small>(since 27.02.2014)</small> </h4>
         <ul><li ng-repeat="user in pageinfo.users" ng-show="user.debit>0">{{user.name}}: {{user.debit}}</li></ul>
     </div>
-    <div class="five columns">
+    <div class="four columns">
         <h4>Credit</h4>
         <ul>
             <li ng-repeat="user in pageinfo.users" ng-show="user.credit>0">
@@ -110,7 +139,7 @@
             </li>
         </ul>
     </div>
-    <div class="five columns">
+    <div class="four columns">
         <h4>External loan</h4>
         <ul>
             <li ng-repeat="user in pageinfo.users" ng-show="user.credit<0">

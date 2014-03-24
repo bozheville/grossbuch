@@ -2,13 +2,21 @@
 var controller = function($scope, $http, $cookieStore){
     $scope.showPopup = {TRFilters: false, TRUsers: false};
     $scope.base_url = '/';
+    $scope.exchData = {
+        from: 0,
+        to: 0,
+        user: '',
+        type: 'uah2usd'
+    };
 
     $scope.transactionfilters = {
         filters:{
             debit:true,
             payout:true,
             credit:true,
-            repayment:true
+            repayment:true,
+            BuyUSD:true,
+            SellUSD:true
         },
         users:{}
     };
@@ -36,7 +44,7 @@ var controller = function($scope, $http, $cookieStore){
 
     $scope.processTransaction = function(){
         var errors = [];
-        if(['debit', 'credit','repayment', 'payout'].indexOf($scope.newTransaction.type) == -1){errors.push('type');}
+        if(['debit', 'credit','repayment', 'payout', 'BuyUSD', 'SellUDS'].indexOf($scope.newTransaction.type) == -1){errors.push('type');}
         if(!$scope.newTransaction.name){errors.push('name');}
         if(!String($scope.newTransaction.amount).match(/^\d+$/)){errors.push('amount');}
         if(errors.length == 0){
@@ -68,6 +76,12 @@ var controller = function($scope, $http, $cookieStore){
     $scope.toggleUser = function(_id, value){
         value = value ? 1:0;
         $http.get($scope.base_url + 'api/toggleUser/'+_id+'/'+value);
+    };
+
+    $scope.exchange = function(){
+        $http.get($scope.base_url + 'api/exchange/'+$scope.exchData.user+'/'+$scope.exchData.from+'/'+$scope.exchData.type+'/'+$scope.exchData.to).success(function(e){
+            initNew(e);
+        });
     };
 
     initPage();

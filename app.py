@@ -22,6 +22,11 @@ def newTransaction(uid=0, type='', amount=0):
     bank.newTransaction(uid, type, amount)
     return getinfo()
 
+@bottle.route('/exchange/<user>/<from_amount>/<exchange_type>/<to_amount>')
+def exchange(user='', from_amount=0, exchange_type='', to_amount=0):
+    bank.Exchange(user, from_amount, exchange_type, to_amount)
+    return getinfo()
+
 database = pymongo.MongoClient("mongodb://localhost").tuugotv
 bank = Bank.Bank(database)
 
