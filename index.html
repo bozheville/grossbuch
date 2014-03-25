@@ -23,7 +23,7 @@
             margin-left: -100px;
             width: 200px;
             height: 250px;
-            box-shadow: -webkit-box-shadow: 0 0 10px 0 #404040;
+            box-shadow: -webkit-box-shadow 0 0 10px 0 #404040;
             box-shadow: 0 0 10px 0 #404040;
         }
         .transactions{max-height: 500px; overflow-y: auto;}
@@ -36,17 +36,17 @@
         <div class="four columns toggle-users"> <span class="action filterbutton" ng-click="togglePopup('Users');">manage users</span></div>
     </div>
     <div class="sixteen columns">
-        <h3>Total balance: <span class="amount">{{pageinfo.summary.total}}</span></h3>
-        <h3>Total USD: <span class="amount usd">{{pageinfo.summary.usd}}</span></h3>
-        <h4>In credit: <span class="amount">{{pageinfo.summary.in_credit}}</span></h4>
-        <h4>External loan: <span class="amount">{{pageinfo.summary.externalLoan}}</span></h4>
-        <h4>In Banka: <span class="amount">{{pageinfo.summary.in_bank}}</span></h4>
+        <h3 ng-show="pageinfo.summary.total > 0">Total balance: <span class="amount">{{pageinfo.summary.total}}</span></h3>
+        <h3 ng-show="pageinfo.summary.usd > 0">Total USD: <span class="amount usd">{{pageinfo.summary.usd}}</span></h3>
+        <h4 ng-show="pageinfo.summary.in_credit > 0">In credit: <span class="amount">{{pageinfo.summary.in_credit}}</span></h4>
+        <h4 ng-show="pageinfo.summary.externalLoan > 0">External loan: <span class="amount">{{pageinfo.summary.externalLoan}}</span></h4>
+        <h4 ng-show="pageinfo.summary.in_bank > 0">In Banka: <span class="amount">{{pageinfo.summary.in_bank}}</span></h4>
     </div>
     <div class="sixteen columns">
         <div class="one column">
             <input type="text" ng-model="exchData.from"/>
         </div>
-        <div class="two columns">
+        <div class="three columns">
             <label for="uah2usd">
                 <input type="radio" ng-model="exchData.type" name="convert_type" id="uah2usd" value="uah2usd" selected="selected" />
                 <span>UAH to USD</span>
@@ -117,11 +117,12 @@
                 - {{transaction.fullname}}
                 - {{transaction.type}}
                 - {{transaction.amount}}
-                - Banka: {{transaction.summary.in_bank}},
-                Credit: {{transaction.summary.in_credit}},
-                Loan: {{transaction.summary.externalLoan}},
-                Total: {{transaction.summary.total}}
-                USD: {{transaction.summary.usd}}
+                -
+                <span ng-show="transaction.summary.in_bank > 0">Banka: {{transaction.summary.in_bank}},</span>
+                <span ng-show="transaction.summary.in_credit > 0">Credit: {{transaction.summary.in_credit}},</span>
+                <span ng-show="transaction.summary.externalLoan > 0">Loan: {{transaction.summary.externalLoan}},</span>
+                <span ng-show="transaction.summary.total > 0">Total: {{transaction.summary.total}}</span>
+                <span ng-show="transaction.summary.usd > 0">USD: {{transaction.summary.usd}}</span>
             </li>
         </ul>
     </div>
@@ -129,7 +130,7 @@
         <h4>Debit <small>(since 27.02.2014)</small> </h4>
         <ul><li ng-repeat="user in pageinfo.users" ng-show="user.debit>0">{{user.name}}: {{user.debit}}</li></ul>
     </div>
-    <div class="four columns">
+    <div class="four columns" ng-show="pageinfo.summary.in_credit > 0">
         <h4>Credit</h4>
         <ul>
             <li ng-repeat="user in pageinfo.users" ng-show="user.credit>0">
@@ -139,7 +140,7 @@
             </li>
         </ul>
     </div>
-    <div class="four columns">
+    <div class="four columns" ng-show="pageinfo.summary.externalLoan > 0">
         <h4>External loan</h4>
         <ul>
             <li ng-repeat="user in pageinfo.users" ng-show="user.credit<0">
