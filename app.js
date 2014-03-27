@@ -64,7 +64,13 @@ var controller = function($scope, $http, $cookieStore, $timeout){
             $scope.newTransaction.type = type;
             $scope.newTransaction.amount = amount;
         }
-    }
+    };
+
+    $scope.cancelTransaction = function(){
+        $http.get($scope.base_url + 'api/cancelTransaction/').success(function(e){
+            initNew(e);
+        });
+    };
 
     $scope.setAmount = function(sum){
         $scope.newTransaction.amount=sum;

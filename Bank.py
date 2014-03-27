@@ -98,8 +98,8 @@ class Bank:
         }}]
         r = self.db.users.aggregate(pipeline)
         r = r['result'].pop(0)
-        self.db.summary.update({'_id':'in_credit'}, {'$set': {'amount': int(r['credit'])}})
-        self.db.summary.update({'_id':'externalLoan'}, {'$set': {'amount': -int(r['externalLoan'])}})
+        self.db.summary.update({'_id': 'in_credit'}, {'$set': {'amount': int(r['credit'])}})
+        self.db.summary.update({'_id': 'externalLoan'}, {'$set': {'amount': -int(r['externalLoan'])}})
 
 
     def __countTotal(self):
@@ -124,3 +124,18 @@ class Bank:
             action = 'SellUSD'
             usdamount = int(amount_from)
         self.__logTransaction(user, action, usdamount)
+
+    def cancelTransaction(self):
+        lastTransaction = self.db.transactions.find().sort('ts', -1).limit(1)
+        for tr in lastTransaction:
+            if tr['type'] == 'debit':
+                self.__newTransactionPayout(tr['name'], tr['amount'])
+            elif tr['type'] == 'payout':
+                self.__newTransactionDebit(tr['name'], tr['amount'])
+            elif tr['type'] == 'credit':
+                self.__newTransactionRepayment(tr['name'], tr['amount'])
+            elif tr['type'] == 'repayment':
+                self.__newTransactionCredit(tr['name'], tr['amount'])
+            else:
+                return False
+            self.db.transactions.remove({'_id': tr['_id']})

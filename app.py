@@ -27,6 +27,11 @@ def exchange(user='', from_amount=0, exchange_type='', to_amount=0):
     bank.Exchange(user, from_amount, exchange_type, to_amount)
     return getinfo()
 
+@bottle.route('/cancelTransaction/')
+def cancelTransaction():
+    bank.cancelTransaction()
+    return getinfo()
+
 database = pymongo.MongoClient("mongodb://localhost").tuugotv
 bank = Bank.Bank(database)
 

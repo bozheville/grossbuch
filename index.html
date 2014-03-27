@@ -114,6 +114,7 @@
         <h4>Last transactions
             <span class="action filterbutton" ng-click="togglePopup('TRFilters');">filters</span>
             <span class="action filterbutton" ng-click="togglePopup('TRUsers');">users</span>
+            <span class="action filterbutton" ng-click="cancelTransaction();">Cancel last [X]</span>
         </h4>
         <ul class="transactions">
             <li ng-repeat="transaction in pageinfo.transactions"
