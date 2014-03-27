@@ -1,6 +1,8 @@
 
-var controller = function($scope, $http, $cookieStore){
-    $scope.showPopup = {TRFilters: false, TRUsers: false};
+var controller = function($scope, $http, $cookieStore, $timeout){
+    $scope.title = 'Banka';
+    $scope.initdate = '27.02.2014';
+    $scope.showPopup = {TRFilters: false, TRUsers: false, Users: false};
     $scope.base_url = '/';
     $scope.exchData = {
         from: 0,
@@ -33,7 +35,6 @@ var controller = function($scope, $http, $cookieStore){
             name : $scope.saveduser,
             amount: 20
         };
-//        $scope.newTransaction.date = $scope.newTransaction.date.replace(/(^|[.])([1-9])(?=\.)/g, '$10$2');
     };
 
     var initPage = function(){
@@ -73,6 +74,19 @@ var controller = function($scope, $http, $cookieStore){
         $scope.showPopup[type] = !$scope.showPopup[type];
     };
 
+    $scope.checkAll = function(type, checked){
+        if(type == 'TRFilters'){
+            for(var i in $scope.transactionfilters.filters){
+                $scope.transactionfilters.filters[i] = checked;
+            }
+        } else if(type == 'TRUsers'){
+            for(var i in $scope.transactionfilters.users){
+                $scope.transactionfilters.users[i] = checked;
+            }
+        }
+
+    };
+
     $scope.toggleUser = function(_id, value){
         value = value ? 1:0;
         $http.get($scope.base_url + 'api/toggleUser/'+_id+'/'+value);
@@ -84,8 +98,27 @@ var controller = function($scope, $http, $cookieStore){
         });
     };
 
+    var updatePage = function(){
+        $http.get($scope.base_url + 'api/getinfo').success(function(e){
+            $scope.pageinfo.summary = e.summary;
+            $scope.pageinfo.transactions = e.transactions;
+            var changekeys = ['cedit', 'debit', 'disabled'];
+            for(var i in e.users){
+                for(var j in $scope.pageinfo.users){
+                    if(e.users[i]._id == $scope.pageinfo.users[j]._id){
+                        for(var k in changekeys){
+                            $scope.pageinfo.users[j][changekeys[k]] = e.users[i][changekeys[k]];
+                        }
+                    }
+                }
+            }
+        });
+        $timeout(updatePage, 5000);
+    };
+
     initPage();
+    $timeout(updatePage, 5000);
 
 };
 
-angular.module('tuugobank', ['ngCookies']);
+angular.module('grossbuch', ['ngCookies']);
