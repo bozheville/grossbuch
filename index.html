@@ -31,13 +31,18 @@
         .transactions{max-height: 500px; overflow-y: auto;}
         .hidden{opacity: 0.2;}
         .hidden:hover{opacity: 0.8;}
+        .toggle-sync .action{background-color: #FFA4A2; padding: 2px 3px;}
+        .toggle-sync .action.enabled{background-color: #C0FFC4;}
+        span.enablestatus:after{content: 'disabled';}
+        .toggle-sync .action.enabled span.enablestatus:after{content: 'enabled';}
     </style>
 </head>
 <body>
 <div class="container">
     <div class="sixteen columns">
         <div class="eleven columns">&nbsp;</div>
-        <div class="four columns toggle-users"> <span class="action filterbutton" ng-click="togglePopup('Users');">manage users</span></div>
+        <div class="two columns toggle-sync"> <span ng-class="{enabled: syncenabled}" class="action filterbutton" ng-click="toggleSync();">Sync <span class="enablestatus"></span></span></div>
+        <div class="two columns toggle-users"> <span class="action filterbutton" ng-click="togglePopup('Users');">manage users</span></div>
     </div>
     <div class="sixteen columns">
         <h3 ng-show="pageinfo.summary.total > 0">Total balance: <span class="amount">{{pageinfo.summary.total}}</span></h3>

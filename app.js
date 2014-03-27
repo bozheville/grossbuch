@@ -4,6 +4,7 @@ var controller = function($scope, $http, $cookieStore, $timeout){
     $scope.initdate = '27.02.2014';
     $scope.showPopup = {TRFilters: false, TRUsers: false, Users: false};
     $scope.base_url = '/';
+    $scope.syncenabled = $cookieStore.get('syncenabled');
     $scope.exchData = {
         from: 0,
         to: 0,
@@ -66,6 +67,11 @@ var controller = function($scope, $http, $cookieStore, $timeout){
         }
     };
 
+    $scope.toggleSync = function(){
+        $scope.syncenabled = !$scope.syncenabled;
+        $cookieStore.put('syncenabled', $scope.syncenabled);
+    };
+
     $scope.cancelTransaction = function(){
         $http.get($scope.base_url + 'api/cancelTransaction/').success(function(e){
             initNew(e);
@@ -105,20 +111,22 @@ var controller = function($scope, $http, $cookieStore, $timeout){
     };
 
     var updatePage = function(){
-        $http.get($scope.base_url + 'api/getinfo').success(function(e){
-            $scope.pageinfo.summary = e.summary;
-            $scope.pageinfo.transactions = e.transactions;
-            var changekeys = ['cedit', 'debit', 'disabled'];
-            for(var i in e.users){
-                for(var j in $scope.pageinfo.users){
-                    if(e.users[i]._id == $scope.pageinfo.users[j]._id){
-                        for(var k in changekeys){
-                            $scope.pageinfo.users[j][changekeys[k]] = e.users[i][changekeys[k]];
+        if($scope.syncenabled){
+            $http.get($scope.base_url + 'api/getinfo').success(function(e){
+                $scope.pageinfo.summary = e.summary;
+                $scope.pageinfo.transactions = e.transactions;
+                var changekeys = ['cedit', 'debit', 'disabled'];
+                for(var i in e.users){
+                    for(var j in $scope.pageinfo.users){
+                        if(e.users[i]._id == $scope.pageinfo.users[j]._id){
+                            for(var k in changekeys){
+                                $scope.pageinfo.users[j][changekeys[k]] = e.users[i][changekeys[k]];
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
         $timeout(updatePage, 5000);
     };
 
