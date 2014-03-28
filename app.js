@@ -112,22 +112,26 @@ var controller = function($scope, $http, $cookieStore, $timeout){
 
     var updatePage = function(){
         if($scope.syncenabled){
-            $http.get($scope.base_url + 'api/getinfo').success(function(e){
-                $scope.pageinfo.summary = e.summary;
-                $scope.pageinfo.transactions = e.transactions;
-                var changekeys = ['cedit', 'debit', 'disabled'];
-                for(var i in e.users){
-                    for(var j in $scope.pageinfo.users){
-                        if(e.users[i]._id == $scope.pageinfo.users[j]._id){
-                            for(var k in changekeys){
-                                $scope.pageinfo.users[j][changekeys[k]] = e.users[i][changekeys[k]];
-                            }
+            $scope.refresh();
+        }
+        $timeout(updatePage, 5000);
+    };
+
+    $scope.refresh = function(){
+      $http.get($scope.base_url + 'api/getinfo').success(function(e){
+            $scope.pageinfo.summary = e.summary;
+            $scope.pageinfo.transactions = e.transactions;
+            var changekeys = ['cedit', 'debit', 'disabled'];
+            for(var i in e.users){
+                for(var j in $scope.pageinfo.users){
+                    if(e.users[i]._id == $scope.pageinfo.users[j]._id){
+                        for(var k in changekeys){
+                            $scope.pageinfo.users[j][changekeys[k]] = e.users[i][changekeys[k]];
                         }
                     }
                 }
-            });
-        }
-        $timeout(updatePage, 5000);
+            }
+        });
     };
 
     initPage();
