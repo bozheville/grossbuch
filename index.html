@@ -7,7 +7,23 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/skeleton/1.2/skeleton.min.css"/>
     <script src="//code.angularjs.org/1.2.9/angular.min.js" type="text/javascript"></script>
     <script src="//code.angularjs.org/1.2.9/angular-cookies.min.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script src="/app.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart(target, data, title) {
+        var data = google.visualization.arrayToDataTable(data);
+        var options = {}
+        if(title){
+            options.title = title;
+        }
+        options.curveType = 'function';
+        options.legend = 'none';
+        var chart = new google.visualization.LineChart(document.getElementById(target));
+        chart.draw(data, options);
+      }
+    </script>
     <style>
         .filterbutton{font-variant:small-caps; font-size: 14px;}
         .amount:after{content: " uah";font-variant:small-caps;}
@@ -26,8 +42,10 @@
             height: 250px;
             box-shadow: -webkit-box-shadow 0 0 10px 0 #404040;
             box-shadow: 0 0 10px 0 #404040;
+            padding: 5px;
         }
         .popup h4 small.action{float: right;}
+        .popup .popup-items-wrapper{overflow-y: auto;height: 195px;}
         .transactions{max-height: 500px; overflow-y: auto;}
         .hidden{opacity: 0.2;}
         .hidden:hover{opacity: 0.8;}
@@ -35,6 +53,10 @@
         .toggle-sync .action.enabled{background-color: #C0FFC4;}
         span.enablestatus:after{content: 'disabled';}
         .toggle-sync .action.enabled span.enablestatus:after{content: 'enabled';}
+        #userstatchartwrapper{
+            margin-left: -200px;
+            width: 400px;
+        }
     </style>
 </head>
 <body>
@@ -126,21 +148,23 @@
             <li ng-repeat="transaction in pageinfo.transactions"
                 ng-show="transactionfilters.filters[transaction.type] && transactionfilters.users[transaction.name]">
                 {{transaction.date}}
-                - {{transaction.fullname}}
-                - {{transaction.type}}
+                - <span class="action" ng-click="toggleTransactionUser(transaction.name);">{{transaction.fullname}}</span>
+                - <span class="action" ng-click="toggleTransactionType(transaction.type);">{{transaction.type}}</span>
                 - {{transaction.amount}}
-                -
-                <span ng-show="transaction.summary.in_bank > 0">Banka: {{transaction.summary.in_bank}},</span>
-                <span ng-show="transaction.summary.in_credit > 0">Credit: {{transaction.summary.in_credit}},</span>
-                <span ng-show="transaction.summary.externalLoan > 0">Loan: {{transaction.summary.externalLoan}},</span>
-                <span ng-show="transaction.summary.total > 0">Total: {{transaction.summary.total}}</span>
-                <span ng-show="transaction.summary.usd > 0">USD: {{transaction.summary.usd}}</span>
+                <span ng-show="transaction.summary">
+                    -
+                    <span ng-show="transaction.summary.in_bank > 0">Banka: {{transaction.summary.in_bank}},</span>
+                    <span ng-show="transaction.summary.in_credit > 0">Credit: {{transaction.summary.in_credit}},</span>
+                    <span ng-show="transaction.summary.externalLoan > 0">Loan: {{transaction.summary.externalLoan}},</span>
+                    <span ng-show="transaction.summary.total > 0">Total: {{transaction.summary.total}}</span>
+                    <span ng-show="transaction.summary.usd > 0">USD: {{transaction.summary.usd}}</span>
+                </span>
             </li>
         </ul>
     </div>
     <div class="four columns">
         <h4>Debit <small class="hidden">(since {{initdate}})</small> </h4>
-        <ul><li ng-repeat="user in pageinfo.users" ng-show="user.debit>0">{{user.name}}: {{user.debit}}</li></ul>
+        <ul><li ng-repeat="user in pageinfo.users" class="action" ng-click="showstat(user._id);" ng-show="user.debit>0">{{user.name}}: {{user.debit}}</li></ul>
     </div>
     <div class="four columns" ng-show="pageinfo.summary.in_credit > 0">
         <h4>Credit</h4>
@@ -169,32 +193,45 @@
     Show:
     <span class="action" ng-click="checkAll('TRFilters', true);">All</span>
     <span class="action" ng-click="checkAll('TRFilters', false);">None</span>
-    <label ng-repeat="(type, data) in transactionfilters.filters" for="filter-{{type}}">
-        <input type="checkbox" id="filter-{{type}}" ng-model="transactionfilters.filters[type]" />
-        <span>{{type}}</span>
-    </label>
+    <div class="popup-items-wrapper">
+        <label ng-repeat="(type, data) in transactionfilters.filters" for="filter-{{type}}">
+            <input type="checkbox" id="filter-{{type}}" ng-model="transactionfilters.filters[type]" />
+            <span>{{type}}</span>
+        </label>
+    </div>
 </div>
 <div class="popup" ng-show="showPopup.TRUsers">
     <h4>Users <small class="action" ng-click="togglePopup('TRUsers');">close [x] </small></h4>
     Show:
     <span class="action" ng-click="checkAll('TRUsers', true);">All</span>
     <span class="action" ng-click="checkAll('TRUsers', false);">None</span>
-    <label ng-repeat="user in pageinfo.users" for="user-{{user._id}}">
-        <input type="checkbox" id="user-{{user._id}}" ng-model="transactionfilters.users[user._id]" />
-        <span>{{user.name}}</span>
-    </label>
+    <div class="popup-items-wrapper">
+        <label ng-repeat="user in pageinfo.users" for="user-{{user._id}}">
+            <input type="checkbox" id="user-{{user._id}}" ng-model="transactionfilters.users[user._id]" />
+            <span>{{user.name}}</span>
+        </label>
+    </div>
 </div>
 <div class="popup" ng-show="showPopup.Users">
     <h4>Users disabling <small class="action" ng-click="togglePopup('Users');">close [x] </small></h4>
-    <label ng-repeat="(key, user) in pageinfo.users" for="adminuser-{{user._id}}">
-        <input
-            type="checkbox"
-            id="adminuser-{{user._id}}"
-            ng-model="pageinfo.users[key].disabled"
-            ng-change="toggleUser(user._id, pageinfo.users[key].disabled);"
-        />
-        <span>{{user.name}}</span>
-    </label>
+    <div class="popup-items-wrapper">
+        <label ng-repeat="(key, user) in pageinfo.users" for="adminuser-{{user._id}}">
+            <input
+                type="checkbox"
+                id="adminuser-{{user._id}}"
+                ng-model="pageinfo.users[key].disabled"
+                ng-change="toggleUser(user._id, pageinfo.users[key].disabled);"
+            />
+            <span>{{user.name}}</span>
+        </label>
+    </div>
 </div>
+<div class="popup" ng-show="showPopup.UserStat" id="userstatchartwrapper">
+    <h4>User debit stat <small class="action" ng-click="togglePopup('UserStat');">close [x] </small></h4>
+    <h5>{{ShowUserstatName}}</h5>
+    <div id="userstatchart"></div>
+</div>
+<a href="http://ofigel.com/pages/united-ukraine/" class="ribbon" style="position: absolute; left:0; top:0; width: 90px; height: 90px; background: url('http://ofigel.com/ukraine.png'); z-index: 2013; border: 0;" title="Розмісти стрічку за Єдину Україну на своєму сайті!" target="_blank"></a>
+
 </body>
 </html>

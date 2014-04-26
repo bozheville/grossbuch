@@ -101,7 +101,6 @@ class Bank:
         self.db.summary.update({'_id': 'in_credit'}, {'$set': {'amount': int(r['credit'])}})
         self.db.summary.update({'_id': 'externalLoan'}, {'$set': {'amount': -int(r['externalLoan'])}})
 
-
     def __countTotal(self):
         summary = self.getSummary()
         total = summary['in_bank'] + summary['in_credit'] - summary['externalLoan']
@@ -139,3 +138,31 @@ class Bank:
             else:
                 return False
             self.db.transactions.remove({'_id': tr['_id']})
+
+    def getDebitStat(self, user):
+        user = user.replace('.', '_dot_')
+        pipeline = [
+            {'$group': {
+                '_id': {
+                    'm': '$_id.m',
+                    'y': '$_id.y'
+                },
+                'debit': {'$sum': '$debit.'+user}
+            }}
+            , {'$sort': {
+                '_id.y': 1
+                , '_id.m': 1
+            }}
+            , {'$project': {
+                '_id': {
+                    '$concat': [
+                        {'$substr': ['$_id.m', 0, 2]}
+                        , '.'
+                        , {'$substr': ['$_id.y', 0, 4]}
+                    ]
+                },
+                'debit': 1
+            }},
+        ]
+        stat = self.db.debitstat.aggregate(pipeline)
+        return stat

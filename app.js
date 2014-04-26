@@ -2,7 +2,7 @@
 var controller = function($scope, $http, $cookieStore, $timeout){
     $scope.title = 'Banka';
     $scope.initdate = '27.02.2014';
-    $scope.showPopup = {TRFilters: false, TRUsers: false, Users: false};
+    $scope.showPopup = {TRFilters: false, TRUsers: false, Users: false, UserStat: false};
     $scope.base_url = '/';
     $scope.syncenabled = $cookieStore.get('syncenabled');
     $scope.exchData = {
@@ -73,9 +73,11 @@ var controller = function($scope, $http, $cookieStore, $timeout){
     };
 
     $scope.cancelTransaction = function(){
-        $http.get($scope.base_url + 'api/cancelTransaction/').success(function(e){
-            initNew(e);
-        });
+        if(confirm('Are you sure you want to cancel last transaction? You can\'t restore it.')){
+            $http.get($scope.base_url + 'api/cancelTransaction/').success(function(e){
+                initNew(e);
+            });
+        }
     };
 
     $scope.setAmount = function(sum){
@@ -132,6 +134,74 @@ var controller = function($scope, $http, $cookieStore, $timeout){
                 }
             }
         });
+    };
+
+    $scope.showstat = function(user){
+        $http.get($scope.base_url+'api/getDebitStat/'+user).success(function(e){
+            if(e.ok == 1){
+                $scope.pageinfo.UserStat = e.result;
+                $scope.showPopup['UserStat'] = true;
+                var data = [];
+                data.push(['month', 'debit']);
+                for(var i in e.result){
+                    data.push([e.result[i]._id, e.result[i].debit]);
+                }
+                drawChart('userstatchart', data);
+                $scope.ShowUserstatName = '';
+                for(var i in $scope.pageinfo.users){
+                    if($scope.pageinfo.users[i]._id == user){
+                        $scope.ShowUserstatName = $scope.pageinfo.users[i].name;
+                        break;
+                    }
+                }
+            }
+        });
+    };
+
+    $scope.toggleTransactionUser = function(user){
+        var checked = 0;
+        for(var i in $scope.transactionfilters.users){
+            if($scope.transactionfilters.users[i]){
+                checked++;
+            }
+        }
+        if(checked == 1){
+            for(var i in $scope.transactionfilters.users){
+                $scope.transactionfilters.users[i] = true;
+            }
+        } else{
+            for(var i in $scope.transactionfilters.users){
+                if(i == user){
+                    $scope.transactionfilters.users[i] = true;
+                } else{
+                    $scope.transactionfilters.users[i] = false;
+                }
+
+            }
+        }
+    };
+
+    $scope.toggleTransactionType = function(type){
+        var checked = 0;
+        for(var i in $scope.transactionfilters.filters){
+            if($scope.transactionfilters.filters[i]){
+                checked++;
+            }
+        }
+        if(checked == 1){
+            for(var i in $scope.transactionfilters.filters){
+                $scope.transactionfilters.filters[i] = true;
+            }
+        } else{
+            for(var i in $scope.transactionfilters.filters){
+                if(i == type){
+                    $scope.transactionfilters.filters[i] = true;
+                } else{
+                    $scope.transactionfilters.filters[i] = false;
+                }
+
+            }
+        }
     };
 
     initPage();
