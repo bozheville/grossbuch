@@ -26,6 +26,10 @@ class Bank:
         r = []
         for tr in transactions:
             del tr['_id']
+            if tr['type'] == 'SellUSD':
+                tr['amount'] = str(tr['usd']) + ' USD to ' + str(tr['amount']) + ' UAH'
+            if tr['type'] == 'BuyUSD':
+                tr['amount'] = str(tr['amount']) + ' UAH to ' + str(tr['usd']) + ' USD'
             r.append(tr)
         return r
 
@@ -66,11 +70,12 @@ class Bank:
         self.db.summary.update({'_id': 'in_credit'}, {'$inc': {'amount': -int(amount)}})
         self.db.users.update({'_id': uid}, {'$inc': {'credit': -int(amount)}})
 
-    def __logTransaction(self, uid, type, amount):
+    def __logTransaction(self, uid, type, amount, usd=0):
         user = self.db.users.find_one({'_id': uid})
         log = {}
         log['date'] = time.strftime("%d.%m.%Y")
         log['amount'] = amount
+        log['usd'] = usd
         log['type'] = type
         log['name'] = uid
         log['fullname'] = user['name']
@@ -107,22 +112,25 @@ class Bank:
         self.db.summary.update({'_id': 'total'}, {'$set': {'amount': total}})
         return total
 
-    def Exchange(self, user, amount_from, exchange_type, amount_to):
+    def Exchange(self, user, amount_from, exchange_type, amount_to, do_not_log=False):
         action = ''
         usdamount = 0
         if exchange_type == 'uah2usd':
-            self.db.summary.update({'_id': 'usd'}, {'$inc': {'amount': int(amount_to)}}, True)
-            self.db.summary.update({'_id': 'total'}, {'$inc': {'amount': -int(amount_from)}}, True)
-            self.db.summary.update({'_id': 'in_bank'}, {'$inc': {'amount': -int(amount_from)}}, True)
-            action = 'BuyUSD'
             usdamount = int(amount_to)
+            uahamount = int(amount_from)
+            self.db.summary.update({'_id': 'usd'}, {'$inc': {'amount': int(usdamount)}}, True)
+            self.db.summary.update({'_id': 'total'}, {'$inc': {'amount': -int(uahamount)}}, True)
+            self.db.summary.update({'_id': 'in_bank'}, {'$inc': {'amount': -int(uahamount)}}, True)
+            action = 'BuyUSD'
         elif exchange_type == 'usd2uah':
-            self.db.summary.update({'_id': 'usd'}, {'$inc': {'amount': -int(amount_from)}}, True)
-            self.db.summary.update({'_id': 'total'}, {'$inc': {'amount': int(amount_to)}}, True)
-            self.db.summary.update({'_id': 'in_bank'}, {'$inc': {'amount': int(amount_to)}}, True)
-            action = 'SellUSD'
             usdamount = int(amount_from)
-        self.__logTransaction(user, action, usdamount)
+            uahamount = int(amount_to)
+            self.db.summary.update({'_id': 'usd'}, {'$inc': {'amount': -int(usdamount)}}, True)
+            self.db.summary.update({'_id': 'total'}, {'$inc': {'amount': int(uahamount)}}, True)
+            self.db.summary.update({'_id': 'in_bank'}, {'$inc': {'amount': int(uahamount)}}, True)
+            action = 'SellUSD'
+        if not do_not_log:
+            self.__logTransaction(user, action, uahamount, usdamount)
 
     def cancelTransaction(self):
         lastTransaction = self.db.transactions.find().sort('ts', -1).limit(1)
@@ -135,6 +143,10 @@ class Bank:
                 self.__newTransactionRepayment(tr['name'], tr['amount'])
             elif tr['type'] == 'repayment':
                 self.__newTransactionCredit(tr['name'], tr['amount'])
+            elif tr['type'] == 'SellUSD':
+                self.Exchange(tr['name'], tr['amount'], 'uah2usd', tr['usd'], True)
+            elif tr['type'] == 'BuyUSD':
+                self.Exchange(tr['name'], tr['usd'], 'usd2uah', tr['amount'], True)
             else:
                 return False
             self.db.transactions.remove({'_id': tr['_id']})
