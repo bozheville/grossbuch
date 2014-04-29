@@ -163,8 +163,8 @@
         </ul>
     </div>
     <div class="four columns">
-        <h4>Debit <small class="hidden">(since {{initdate}})</small> </h4>
-        <ul><li ng-repeat="user in pageinfo.users" class="action" ng-click="showstat(user._id);" ng-show="user.debit>0">{{user.name}}: {{user.debit}}</li></ul>
+        <h4>Debit <small class="hidden action" ng-click="showstat('_total');">(since {{initdate}})</small> </h4>
+        <ul><li ng-repeat="user in pageinfo.users" class="action" ng-click="showstat(user._id);" ng-show="user.debit>0 || user.debit<0">{{user.name}}: {{user.debit}}</li></ul>
     </div>
     <div class="four columns" ng-show="pageinfo.summary.in_credit > 0">
         <h4>Credit</h4>

@@ -51,6 +51,9 @@ class Bank:
             self.__countLoans()
             self.__countTotal()
             self.__logTransaction(uid, type, amount)
+            if type == 'debit' or type == 'payout':
+                self.__updateDebitStat(uid)
+
 
     def __newTransactionPayout(self, uid, amount):
         self.db.summary.update({'_id': 'in_bank'}, {'$inc': {'amount': -int(amount)}})
@@ -134,7 +137,11 @@ class Bank:
 
     def cancelTransaction(self):
         lastTransaction = self.db.transactions.find().sort('ts', -1).limit(1)
+        uid = ''
+        type = ''
         for tr in lastTransaction:
+            uid = tr['name']
+            type =tr['type']
             if tr['type'] == 'debit':
                 self.__newTransactionPayout(tr['name'], tr['amount'])
             elif tr['type'] == 'payout':
@@ -150,6 +157,9 @@ class Bank:
             else:
                 return False
             self.db.transactions.remove({'_id': tr['_id']})
+        if type == 'debit' or type == 'payout':
+                self.__updateDebitStat(uid)
+        self.__countTotal()
 
     def getDebitStat(self, user):
         user = user.replace('.', '_dot_')
@@ -178,3 +188,25 @@ class Bank:
         ]
         stat = self.db.debitstat.aggregate(pipeline)
         return stat
+
+    def __updateDebitStat(self, user):
+        safe_user = user.replace('.', '_dot_')
+        self.db.debitstat.update({}, {'$set': {'debit.'+safe_user: 0}}, upsert=True, multi=True)
+        transactions = self.db.transactions.find({'name': user, 'type': {'$in': ['debit', 'payout']}})
+        for item in transactions:
+            date = item['date'].split('.')
+            amount = int(item['amount'])
+            if item['type'] == 'payout':
+                 amount *= -1
+            _id = {
+                'd': int(date[0]),
+                'm': int(date[1]),
+                'y': int(date[2])
+            }
+            update = {
+                '$inc': {
+                    'debit.'+safe_user: amount,
+                    'debit._total': amount
+                }
+            }
+            self.db.debitstat.update({'_id': _id}, update, True)
